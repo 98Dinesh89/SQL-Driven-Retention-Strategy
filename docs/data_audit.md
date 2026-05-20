@@ -2,11 +2,12 @@
 
 ## Dataset Information
 
-- Dataset Name: Dataset
+- Dataset Name: Customer Shopping Trends Dataset
 - Total Rows: 3900
 - Total Columns: 18
 - Duplicate Customer IDs: 0
 - Duplicate Rows: 0
+- Dataset Granularity: One row represents one customer
 
 ---
 
@@ -19,7 +20,7 @@
 
 ### Observation
 
-The dataset is almost fully complete with missing values only in 'Review Rating' coulmn. The missing value percentage is less than 1% (0.95%), so medium imputation is appropriate and will not cause distortion in distribution.
+The dataset is nearly complete with missing values only present in the `Review Rating` column. Since the missing percentage is below 1%, median imputation is appropriate and unlikely to distort the overall distribution.
 
 ---
 
@@ -32,7 +33,7 @@ The dataset is almost fully complete with missing values only in 'Review Rating'
 
 ### Observation
 
-Each row represents a unique customer.
+Each row represents a unique customer profile. The dataset is customer-level rather than transaction-level.
 
 ---
 
@@ -48,7 +49,7 @@ Each row represents a unique customer.
 
 ### Observation
 
-No datatype mismatches.
+No major datatype mismatches were detected.
 
 ---
 
@@ -66,7 +67,7 @@ Columns Reviewed:
 
 ### Observation
 
-No major inconsistencies were found.
+No major inconsistencies were found in categorical values. However, text standardization using lowercase conversion and whitespace stripping was still applied to ensure consistency for grouping and SQL analysis.
 
 ---
 
@@ -74,27 +75,28 @@ No major inconsistencies were found.
 
 ## Purchase Amount (USD)
 
-- Range appears evenly distributed between approximately 20–100 USD.
-- No extreme skewness observed.
+- Purchase amounts are distributed approximately between 20–100 USD.
+- No strong skewness or extreme concentration was observed.
+- Distribution appears relatively balanced.
 
 ## Previous Purchases
 
 - Range: 1–50 purchases
-- Serves as a strong base for retention and loyalty behavior.
+- Serves as a strong behavioral proxy for customer retention and loyalty.
 
 ## Age
 
 - Distribution is relatively uniform between 18–70.
-- No dominant customer age cluster detected.
+- No dominant customer age cluster was identified.
 
 ### Planned Outlier Treatment
 
-IQR-based outlier detection method on:
+IQR-based outlier detection was applied on:
 
 - Purchase Amount (USD)
 - Previous Purchases
 
-If outliers are detected then they will be capped rather than removed to preserve customer information.
+Outliers, if detected, were capped rather than removed to preserve customer-level information.
 
 ---
 
@@ -102,13 +104,53 @@ If outliers are detected then they will be capped rather than removed to preserv
 
 1. Clothing is the dominant product category and may represent the primary acquisition category.
 
-2. Geographic distribution is highly balanced across states, meaning opportunity analysis should focus on spend and loyalty rather than customer volume alone.
+2. Geographic distribution is highly balanced across states, meaning opportunity analysis should focus on customer value and loyalty rather than customer count alone.
 
-3. Frequency of Purchases is well distributed and will likely become one of the strongest behavioral features for loyalty modeling.
+3. Frequency of Purchases is well distributed and serves as a strong behavioral signal for loyalty modeling.
 
-4. Previous Purchases appears to be the strongest available retention base in the dataset.
+4. Previous Purchases appears to be one of the strongest retention-related variables available in the dataset.
 
-5. Since the dataset is customer-level rather than transactional, advanced metrics such as loyalty and promo dependency must be inferred from available variables.
+5. Since the dataset is customer-level rather than transactional, advanced behavioral metrics such as loyalty and promotional dependency must be inferred using proxy features.
+
+---
+
+# Promotional Dependency Observation
+
+The columns:
+
+- `Discount Applied`
+- `Promo Code Used`
+
+were found to be perfectly correlated across the dataset.
+
+This means:
+
+- every customer with a discount also used a promo code
+- no intermediate promotional behavior exists
+
+As a result:
+
+- `Discount Applied` was retained as the primary feature for promotional dependency analysis
+- `Promo Code Used` was retained only for traceability and downstream analysis
+
+This causes promotional dependency to behave as a binary feature rather than a continuous behavioral measure.
+
+---
+
+# Dataset Limitations
+
+The dataset does not contain:
+
+- transaction-level purchase history
+- timestamps
+- sequential purchasing behavior
+- actual churn labels
+
+Therefore:
+
+- retention behavior must be inferred indirectly
+- customer lifetime value must be approximated using proxy metrics
+- promotional dependency cannot be measured dynamically over time
 
 ---
 
@@ -123,16 +165,82 @@ If outliers are detected then they will be capped rather than removed to preserv
 
 ---
 
-# Planned Feature Engineering
+# Feature Engineering Strategy
 
-The following business-focused features will be created:
+The following business-focused features were engineered to construct customer intelligence from available variables:
 
-| Feature                | Purpose                                    |
-| ---------------------- | ------------------------------------------ |
-| promo_dependency_score | Measure discount reliance                  |
-| value_tier             | Segment customers by revenue potential     |
-| repeat_buyer_flag      | Identify repeat purchase behavior          |
-| satisfaction_flag      | Capture customer satisfaction              |
-| avg_spend_per_visit    | Estimate economic value per purchase cycle |
-| loyalty_score_v1       | Behavior-based loyalty                     |
-| loyalty_score_v2       | Revenue-based loyalty                      |
+| Feature                       | Purpose                                            |
+| ----------------------------- | -------------------------------------------------- |
+| frequency_score               | Convert purchase cadence into behavioral intensity |
+| subscription_flag             | Capture subscription engagement behavior           |
+| repeat_buyer_flag             | Identify repeat purchasing behavior                |
+| promo_dependency_score        | Measure discount reliance                          |
+| discount_sensitivity_segment  | Segment customers by promotional dependency        |
+| avg_spend_per_visit           | Estimate spending efficiency                       |
+| spending_velocity_score       | Measure spending intensity                         |
+| customer_lifetime_value_proxy | Approximate long-term customer value               |
+| value_tier                    | Segment customers by economic value                |
+| customer_engagement_score     | Estimate overall engagement strength               |
+| retention_risk_score          | Estimate retention vulnerability                   |
+| loyalty_score_v1              | Behavior-based loyalty definition                  |
+| loyalty_score_v2              | Revenue-based loyalty definition                   |
+
+---
+
+# Repeat Buyer Threshold Refinement
+
+The initial repeat buyer definition:
+
+- `Previous Purchases > 2`
+
+produced a highly imbalanced feature with approximately 96% positive cases.
+
+The threshold was refined to:
+
+- `Previous Purchases > 6`
+
+to improve customer differentiation and increase segmentation quality.
+
+---
+
+# Loyalty Score Design
+
+Two separate loyalty definitions were intentionally created to distinguish between behavioral loyalty and commercial value.
+
+## loyalty_score_v1
+
+Behavior-focused loyalty based on:
+
+- purchase frequency behavior
+- low promotional dependency
+- customer satisfaction
+- engagement behavior
+
+Purpose:
+Estimate intrinsic customer loyalty independent of spending.
+
+---
+
+## loyalty_score_v2
+
+Revenue-focused loyalty based on:
+
+- estimated customer lifetime value
+- engagement behavior
+- subscription participation
+
+Purpose:
+Estimate commercially valuable customers with strong long-term revenue potential.
+
+---
+
+# Analytical Assumption
+
+High customer value and high customer loyalty are not assumed to be equivalent.
+
+The project intentionally separates:
+
+- behavioral loyalty
+- commercial value
+
+to support more realistic customer segmentation and retention strategy development.

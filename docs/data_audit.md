@@ -244,3 +244,205 @@ The project intentionally separates:
 - commercial value
 
 to support more realistic customer segmentation and retention strategy development.
+
+---
+
+# Week 2 — Advanced Customer Analytics
+
+## Loyalty Validation Analysis
+
+Two separate loyalty frameworks were validated using both Pearson and Spearman correlation analysis against estimated customer lifetime value (`customer_lifetime_value_proxy`).
+
+### Correlation Results
+
+| Metric               | loyalty_score_v1 | loyalty_score_v2 |
+| -------------------- | ---------------- | ---------------- |
+| Pearson Correlation  | 0.411            | 0.815            |
+| Spearman Correlation | 0.446            | 0.784            |
+
+### Interpretation
+
+- `loyalty_score_v1` captures behavioral loyalty and demonstrates moderate correlation with customer lifetime value.
+- `loyalty_score_v2` captures commercial loyalty and demonstrates strong correlation with long-term customer value.
+
+This confirms that:
+
+- behavioral loyalty and commercial value are related
+- but not equivalent concepts
+
+The dual-loyalty framework was intentionally preserved to support more realistic customer segmentation.
+
+---
+
+# Loyalty Segment Validation
+
+Customers were segmented into three loyalty groups using quartile-based segmentation on `loyalty_score_v2`.
+
+| Segment | Logic      |
+| ------- | ---------- |
+| Loyal   | Top 25%    |
+| Growth  | Middle 50% |
+| At-Risk | Bottom 25% |
+
+### Segment Distribution
+
+| Segment | Customer Count |
+| ------- | -------------- |
+| Loyal   | 975            |
+| Growth  | 1950           |
+| At-Risk | 975            |
+
+---
+
+# Chi-Square Validation
+
+A chi-square test was performed between loyalty segments and promotional dependency behavior.
+
+### Result
+
+- Chi-Square Statistic: 75.11
+- P-Value: 4.91e-17
+
+### Interpretation
+
+The extremely small p-value indicates that promotional dependency differs significantly across loyalty segments.
+
+This statistically validates the segmentation framework and confirms that loyalty segmentation captures meaningful behavioral differences.
+
+---
+
+# Customer Segmentation Modeling
+
+## Clustering Method
+
+K-Means clustering was applied using the following normalized behavioral and commercial features:
+
+- customer_lifetime_value_proxy
+- customer_engagement_score
+- retention_risk_score
+- promo_dependency_score
+- normalized_frequency_score
+
+### Cluster Optimization
+
+Silhouette analysis was performed for:
+
+- K = 2 to K = 6
+
+| K   | Silhouette Score |
+| --- | ---------------- |
+| 2   | 0.3909           |
+| 3   | 0.3644           |
+| 4   | 0.3893           |
+| 5   | 0.3670           |
+| 6   | 0.3533           |
+
+Although K=2 produced the highest silhouette score, K=4 was selected because it provided significantly richer business interpretability with only a negligible reduction in clustering quality.
+
+---
+
+# Final Customer Segments
+
+## 1. Loyal High-Value
+
+Characteristics:
+
+- high customer lifetime value
+- low retention risk
+- high behavioral loyalty
+- no promotional dependency
+
+Business Meaning:
+Represents the brand’s healthiest and most sustainable customer base.
+
+---
+
+## 2. High-Value Promo Dependent
+
+Characteristics:
+
+- very high customer lifetime value
+- high engagement
+- complete promotional dependency
+- moderate retention risk
+
+Business Meaning:
+Represents high-revenue customers whose purchasing behavior relies heavily on discounts and promotions.
+
+---
+
+## 3. At-Risk Promo Customers
+
+Characteristics:
+
+- low customer value
+- high retention risk
+- strong promotional dependency
+- weak engagement
+
+Business Meaning:
+Represents low-quality, discount-driven customers with weak long-term retention potential.
+
+---
+
+## 4. Dormant Organic
+
+Characteristics:
+
+- low engagement
+- low promotional dependency
+- moderate retention risk
+- stable but inactive purchasing behavior
+
+Business Meaning:
+Represents organically acquired customers with potential for reactivation and growth.
+
+---
+
+# Strategic Findings
+
+## Key Observation 1
+
+The analysis identified two fundamentally different types of high-value customers:
+
+- organically loyal high-value customers
+- promotion-dependent high-value customers
+
+This indicates that high customer value does not necessarily imply healthy long-term loyalty.
+
+---
+
+## Key Observation 2
+
+Average purchase amounts were relatively similar across all customer segments.
+
+This suggests that long-term customer value is driven more strongly by:
+
+- purchasing frequency
+- engagement behavior
+- retention quality
+- promotional dependency
+
+rather than by single-purchase spending differences.
+
+---
+
+## Key Observation 3
+
+A substantial portion of commercially valuable customers remain highly promotion-dependent.
+
+This suggests the business may currently be generating revenue growth through discount-driven purchasing behavior rather than through fully organic customer loyalty.
+
+---
+
+# Final Analytical Deliverables
+
+The following analytical artifacts were generated:
+
+| Artifact                    | Purpose                                       |
+| --------------------------- | --------------------------------------------- |
+| final_segmented_dataset.csv | customer-level dataset with segment labels    |
+| segment_profiles.csv        | segment-level business intelligence table     |
+| loyalty validation analysis | statistical validation of loyalty framework   |
+| customer segmentation model | behavioral and commercial customer clustering |
+| strategic segment insights  | business recommendation foundation            |
